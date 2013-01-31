@@ -326,10 +326,13 @@ protected:
    * aType is the type passed to MoveFocus. If aNoParentTraversal is set,
    * navigation is not done to parent documents and iteration returns to the
    * beginning (or end) of the starting document.
+   *
+   * aNoMove should be true if don't want to change the focus. 
    */
   nsresult DetermineElementToMoveFocus(nsPIDOMWindow* aWindow,
                                        nsIContent* aStart,
                                        int32_t aType, bool aNoParentTraversal,
+                                       bool aNoMove,
                                        nsIContent** aNextContent);
 
   /**

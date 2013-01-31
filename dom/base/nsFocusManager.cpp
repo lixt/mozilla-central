@@ -509,25 +509,31 @@ nsFocusManager::MoveFocus(nsIDOMWindow* aWindow, nsIDOMElement* aStartElement,
 
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
+  bool noMove = aFlags & FLAG_NOMOVE;
+
   bool noParentTraversal = aFlags & FLAG_NOPARENTFRAME;
   nsCOMPtr<nsIContent> newFocus;
   nsresult rv = DetermineElementToMoveFocus(window, startContent, aType, noParentTraversal,
-                                            getter_AddRefs(newFocus));
+                                            noMove, getter_AddRefs(newFocus));
   NS_ENSURE_SUCCESS(rv, rv);
 
   LOGCONTENTNAVIGATION("Element to be focused: %s", newFocus.get());
 
   if (newFocus) {
-    // for caret movement, pass false for the aFocusChanged argument,
-    // otherwise the caret will end up moving to the focus position. This
-    // would be a problem because the caret would move to the beginning of the
-    // focused link making it impossible to navigate the caret over a link.
-    SetFocusInner(newFocus, aFlags, aType != MOVEFOCUS_CARET, true);
+    if (!noMove) {
+      // for caret movement, pass false for the aFocusChanged argument,
+      // otherwise the caret will end up moving to the focus position. This
+      // would be a problem because the caret would move to the beginning of the
+      // focused link making it impossible to navigate the caret over a link.
+      //SetFocusInner(newFocus, aFlags, aType != MOVEFOCUS_CARET, true);
+    }
     CallQueryInterface(newFocus, aElement);
   }
   else if (aType == MOVEFOCUS_ROOT || aType == MOVEFOCUS_CARET) {
-    // no content was found, so clear the focus for these two types.
-    ClearFocus(window);
+    if (!noMove) {
+      // no content was found, so clear the focus for these two types.
+      //ClearFocus(window);
+    }
   }
 
   LOGFOCUS(("<<MoveFocus end>>"));
@@ -2300,6 +2306,7 @@ nsresult
 nsFocusManager::DetermineElementToMoveFocus(nsPIDOMWindow* aWindow,
                                             nsIContent* aStartContent,
                                             int32_t aType, bool aNoParentTraversal,
+                                            bool aNoMove,
                                             nsIContent** aNextContent)
 {
   *aNextContent = nullptr;
@@ -2601,11 +2608,13 @@ nsFocusManager::DetermineElementToMoveFocus(nsPIDOMWindow* aWindow,
       docShell->TabToTreeOwner(forward, &tookFocus);
       // if the tree owner, took the focus, blur the current content
       if (tookFocus) {
-        nsCOMPtr<nsPIDOMWindow> window = do_GetInterface(docShell);
-        if (window->GetFocusedNode() == mFocusedContent)
-          Blur(mFocusedWindow, nullptr, true, true);
-        else
-          window->SetFocusedNode(nullptr);
+        if (!aNoMove) {
+          nsCOMPtr<nsPIDOMWindow> window = do_GetInterface(docShell);
+          if (window->GetFocusedNode() == mFocusedContent)
+            Blur(mFocusedWindow, nullptr, true, true);
+          else
+            window->SetFocusedNode(nullptr);
+        }
         return NS_OK;
       }
 

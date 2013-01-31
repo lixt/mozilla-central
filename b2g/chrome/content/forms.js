@@ -23,6 +23,10 @@ XPCOMUtils.defineLazyGetter(this, "domWindowUtils", function () {
                 .getInterface(Ci.nsIDOMWindowUtils);
 });
 
+XPCOMUtils.defineLazyGetter(this, "focusManager", function() {
+  return Cc["@mozilla.org/focus-manager;1"].getService(Ci.nsIFocusManager);
+});
+
 const RESIZE_SCROLL_DELAY = 20;
 
 let HTMLDocument = Ci.nsIDOMHTMLDocument;
@@ -191,6 +195,10 @@ let FormAssistant = {
     addMessageListener("Forms:Input:Value", this);
     addMessageListener("Forms:Select:Blur", this);
     addMessageListener("Forms:SetSelectionRange", this);
+    addMessageListener("Forms:DeleteSurroundingText", this);
+    addMessageListener("Forms:CommitText", this);
+    addMessageListener("Forms:SetComposingText", this);
+    addMessageListener("Forms:MoveFocus", this);
   },
 
   ignoredInputTypes: new Set([
@@ -250,6 +258,7 @@ let FormAssistant = {
     let range = null;
     switch (evt.type) {
       case "focus":
+        CompositionManager.finishComposingText();
         if (!target) {
           break;
         }
@@ -278,6 +287,7 @@ let FormAssistant = {
         // fall through
       case "blur":
       case "submit":
+        CompositionManager.finishComposingText();
         if (this.focusedElement) {
           this.hideKeyboard();
           this.selectionStart = -1;
@@ -288,6 +298,7 @@ let FormAssistant = {
       case 'mousedown':
         // We only listen for this event on the currently focused element.
         // When the mouse goes down, note the cursor/selection position
+        CompositionManager.finishComposingText();     
         this.updateSelection();
         break;
 
@@ -296,6 +307,7 @@ let FormAssistant = {
         // When the mouse goes up, see if the cursor has moved (or the
         // selection changed) since the mouse went down. If it has, we
         // need to tell the keyboard about it
+        CompositionManager.finishComposingText();
         range = getSelectionRange(this.focusedElement);
         if (range[0] !== this.selectionStart ||
             range[1] !== this.selectionEnd) {
@@ -327,6 +339,7 @@ let FormAssistant = {
 
       case "input":
         // When the text content changes, notify the keyboard
+        this.updateTextContent();
         this.updateSelection();
         break;
 
@@ -349,6 +362,7 @@ let FormAssistant = {
     let json = msg.json;
     switch (msg.name) {
       case "Forms:Input:Value": {
+        CompositionManager.finishComposingText();
         target.value = json.value;
 
         let event = content.document.createEvent('HTMLEvents');
@@ -384,6 +398,7 @@ let FormAssistant = {
         break;
 
       case "Forms:Select:Blur": {
+        CompositionManager.finishComposingText();
         this.setFocusedElement(null);
         break;
       }
@@ -393,6 +408,43 @@ let FormAssistant = {
         let end =  json.selectionEnd;
         setSelectionRange(target, start, end);
         this.updateSelection();
+        break;
+      }
+
+      case "Forms:DeleteSurroundingText": {
+        CompositionManager.finishComposingText();
+        let beforeLength = json.beforeLength;
+        let afterLength = json.afterLength;
+        deleteSurroundingText(target, this.selectionStart, beforeLength,
+                              afterLength);
+        break;
+      }
+
+      case "Forms:CommitText": {
+        CompositionManager.finishComposingText();
+        let text = json.text;
+        commitText(target, text);
+        this.updateTextContent();
+        this.updateSelection();
+        break;
+      }
+
+      case "Forms:SetComposingText": {
+        let text = json.text;
+        if (text) {
+          CompositionManager.setComposingText(text);
+        } else {
+          CompositionManager.finishComposingText();
+        }
+        break;
+      }
+
+      case "Forms:MoveFocus": {
+        let dir = json.direction;
+        let nextFocused = ImeFocusManager.getElementToMoveFocus(target, dir);
+        if (nextFocused) {
+          ImeFocusManager.setFocus(nextFocused);
+        }
         break;
       }
     }
@@ -484,7 +536,17 @@ let FormAssistant = {
         selectionEnd: range[1]
       });
     }
-  }
+  },
+
+  // Notify when the text content changes
+  updateTextContent: function fa_updateTextContent() {
+    let element = this.focusedElement;
+    let text =  element.contentEditable === "true" ?
+      getContentEditableText(element) : element.value;
+    sendAsyncMessage("Forms:TextChange", {
+      text: text
+    });
+   }
 };
 
 FormAssistant.init();
@@ -546,6 +608,18 @@ function getJSON(element) {
 
   let range = getSelectionRange(element);
 
+  let forward = ImeFocusManager.getElementToMoveFocus(element, "forward");
+  let backward = ImeFocusManager.getElementToMoveFocus(element, "backward");
+
+  let returnkeytype = element.getAttribute('returnkeytype');
+  if (returnkeytype) {
+    returnkeytype = returnkeytype.toLowerCase();
+  } else {
+    returnkeytype = '';
+  }
+
+  let returnkeylabel = element.getAttribute('returnkeylabel') || '';
+
   return {
     "type": type.toLowerCase(),
     "choices": getListForElement(element),
@@ -553,6 +627,10 @@ function getJSON(element) {
     "inputmode": inputmode,
     "selectionStart": range[0],
     "selectionEnd": range[1],
+    "canAdvanceFocus": forward != null,
+    "canRewindFocus": backward != null,
+    "returnkeytype": returnkeytype,
+    "returnkeylabel": returnkeylabel,
     "max": max,
     "min": min
   };
@@ -720,3 +798,127 @@ function setSelectionRange(element, start, end) {
   }
 }
 
+function deleteSurroundingText(element, selectionStart, beforeLength, afterLength) {
+  // Selet the text to be deleted
+  let start = selectionStart - beforeLength;
+  let end = selectionStart + afterLength;
+  setSelectionRange(element, start, end);
+
+  // Delete the selected text
+  let isContentEditable = element.contentEditable === "true";
+  let editor = null;
+  if (!isContentEditable) {
+    // Get the nsIEditor of the <input> and <textarea> elements
+    element.QueryInterface(Ci.nsIDOMNSEditableElement);
+    editor = element.editor;
+  } else {
+    // Get the nsIEditor of the content editable element
+    let session = Cc["@mozilla.org/editor/editingsession;1"].createInstance(Ci.nsIEditingSession);
+    editor = session.getEditorForWindow(element.ownerDocument.defaultView);
+  }
+  editor.deleteSelection(Ci.nsIEditor.ePrevious, Ci.nsIEditor.eStrip)
+}
+
+function commitText(element, text) {
+  let isContentEditable = element.contentEditable === "true";
+  if (isContentEditable) {
+    // Insert text to the content editable element
+    element.ownerDocument.execCommand("inserttext", false, text);
+  } else {
+    // Insert text to the <input> and <textarea> elements
+    element.QueryInterface(Ci.nsIDOMNSEditableElement);
+    let editor = element.editor.QueryInterface(Ci.nsIPlaintextEditor);
+    editor.insertText(text);
+  }
+}
+
+let CompositionManager =  {
+  _isStarted: false,
+
+  setComposingText: function cm_setComposingText(text) {
+    let length = text.length;
+    if (length == 0) {
+      return;
+    }
+
+    // start composition if needs
+    if (!this._isStarted) {
+      this._isStarted = true;
+      domWindowUtils.sendCompositionEvent("compositionstart", "", "");
+    }
+
+    // Update the composing text
+    domWindowUtils.sendCompositionEvent("compositionupdate", text, "");
+    domWindowUtils.sendTextEvent(text, length,
+                                 domWindowUtils.COMPOSITION_ATTR_RAWINPUT,
+                                 0, 0, 0, 0, length, 0);
+  },
+
+  finishComposingText: function cm_finishComposingText() {
+    if (!this._isStarted) {
+      return;
+    }
+    domWindowUtils.sendTextEvent("", 0,
+                                 domWindowUtils.COMPOSITION_ATTR_RAWINPUT,
+                                 0, 0, 0, 0, 0, 0);
+    domWindowUtils.sendCompositionEvent("compositionend", "", "");
+    this._isStarted = false;
+  }
+};
+
+let ImeFocusManager = {
+  getElementToMoveFocus:
+      function ifm_getElementToMoveFocus(element, direction) {
+    let win = element.ownerDocument.defaultView;
+    let flags = focusManager.FLAG_NOMOVE;
+
+    // Get the last focusable element
+    let type = direction == "forward" ? focusManager.MOVEFOCUS_LAST :
+                                        focusManager.MOVEFOCUS_FIRST;
+    let last = focusManager.moveFocus(win, null, type, flags);
+
+    // Current element is the last element, so there is no element to move focus
+    // to.
+    if (last == element) {
+      return null;
+    }
+
+    type = direction == "forward" ? focusManager.MOVEFOCUS_FORWARD :
+                                        focusManager.MOVEFOCUS_BACKWARD;
+    let next = element;
+    while (true) {
+      if (next == last) {
+        next = null;
+        break;
+      }
+      next = focusManager.moveFocus(win, next, type, flags);
+      if (!next) {
+        break;
+      }
+      if (next.getAttribute("contenteditable") == "true") {
+        break;
+      }
+      if (next instanceof HTMLInputElement) {
+        let type = next.type;
+        if (FormAssistant.ignoredInputTypes.has(type) ||
+            type.indexOf("time") != -1 ||
+            type.indexOf("date") != -1 ||
+            next.readonly) {
+          continue;
+        }
+        break;
+      }
+      if (next instanceof HTMLTextAreaElement) {
+        if (next.readonly) {
+          continue;
+        }
+        break;
+      }
+    };
+    return next;
+  },
+
+  setFocus: function imf_setFocus(element) {
+    focusManager.setFocus(element, focusManager.FLAG_BYMOVEFOCUS);
+  }
+};

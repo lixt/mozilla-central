@@ -21,7 +21,8 @@ let Keyboard = {
   _messageManager: null,
   _messageNames: [
     'SetValue', 'RemoveFocus', 'SetSelectedOption', 'SetSelectedOptions',
-    'SetSelectionRange'
+    'SetSelectionRange', 'DeleteSurroundingText', 'CommitText',
+    'SetComposingText', 'MoveFocus'
   ],
 
   get messageManager() {
@@ -48,6 +49,7 @@ let Keyboard = {
     let mm = frameLoader.messageManager;
     mm.addMessageListener('Forms:Input', this);
     mm.addMessageListener('Forms:SelectionChange', this);
+    mm.addMessageListener('Forms:TextChange', this);
 
     // When not running apps OOP, we need to load forms.js here since this
     // won't happen from dom/ipc/preload.js
@@ -92,6 +94,9 @@ let Keyboard = {
       case 'Forms:SelectionChange':
         this.handleFormsSelectionChange(msg);
         break;
+      case 'Forms:TextChange':
+        this.handleFormsTextChange(msg);
+        break;
       case 'Keyboard:SetValue':
         this.setValue(msg);
         break;
@@ -106,6 +111,18 @@ let Keyboard = {
         break;
       case 'Keyboard:SetSelectionRange':
         this.setSelectionRange(msg);
+        break;
+      case 'Keyboard:DeleteSurroundingText':
+        this.deleteSurroundingText(msg);
+        break;
+      case 'Keyboard:CommitText':
+        this.commitText(msg);
+        break;
+      case 'Keyboard:SetComposingText':
+        this.setComposingText(msg);
+        break;
+      case 'Keyboard:MoveFocus':
+        this.moveFocus(msg);
         break;
     }
   },
@@ -122,6 +139,13 @@ let Keyboard = {
                              .frameLoader.messageManager;
 
     ppmm.broadcastAsyncMessage('Keyboard:SelectionChange', msg.data);
+  },
+
+  handleFormsTextChange: function keyboardHandleFormsTextChange(msg) {
+    this.messageManager = msg.target.QueryInterface(Ci.nsIFrameLoaderOwner)
+                             .frameLoader.messageManager;
+
+    ppmm.broadcastAsyncMessage('Keyboard:TextChange', msg.data);
   },
 
   setSelectedOption: function keyboardSetSelectedOption(msg) {
@@ -142,6 +166,23 @@ let Keyboard = {
 
   removeFocus: function keyboardRemoveFocus() {
     this.messageManager.sendAsyncMessage('Forms:Select:Blur', {});
+  },
+
+  deleteSurroundingText: function keyboardDeleteSurroundingText(msg) {
+    this.messageManager.sendAsyncMessage('Forms:DeleteSurroundingText',
+                                         msg.data);
+  },
+
+  commitText: function keyboardCommitText(msg) {
+    this.messageManager.sendAsyncMessage('Forms:CommitText', msg.data);
+  },
+
+  setComposingText: function keyboardSetComposingText(msg) {
+    this.messageManager.sendAsyncMessage('Forms:SetComposingText', msg.data);
+  },
+
+  moveFocus: function keyboardMoveFocus(msg) {
+    this.messageManager.sendAsyncMessage('Forms:MoveFocus', msg.data);
   }
 };
 

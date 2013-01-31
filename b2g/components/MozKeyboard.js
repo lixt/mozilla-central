@@ -51,6 +51,7 @@ MozKeyboard.prototype = {
     Services.obs.addObserver(this, "inner-window-destroyed", false);
     cpmm.addMessageListener('Keyboard:FocusChange', this);
     cpmm.addMessageListener('Keyboard:SelectionChange', this);
+    cpmm.addMessageListener('Keyboard:TextChange', this);
 
     this._window = win;
     this._utils = win.QueryInterface(Ci.nsIInterfaceRequestor)
@@ -60,12 +61,20 @@ MozKeyboard.prototype = {
     this._selectionHandler = null;
     this._selectionStart = -1;
     this._selectionEnd = -1;
+    this._text = "";
+    this._canAdvanceFocus = false;
+    this._canRewindFocus = false;
+    this._inputType = "";
+    this._inputMode = "";
+    this._returnKeyType = "";
+    this._returnKeyLabel = "";
   },
 
   uninit: function mozKeyboardUninit() {
     Services.obs.removeObserver(this, "inner-window-destroyed");
     cpmm.removeMessageListener('Keyboard:FocusChange', this);
     cpmm.removeMessageListener('Keyboard:SelectionChange', this);
+    cpmm.removeMessageListener('Keyboard:TextChange', this);
 
     this._window = null;
     this._utils = null;
@@ -100,6 +109,14 @@ MozKeyboard.prototype = {
     cpmm.sendAsyncMessage('Keyboard:SetValue', {
       'value': value
     });
+  },
+
+  set text(val) {
+    this.setValue(val);
+  },
+  
+  get text() {
+    return this._text;
   },
 
   setSelectedOptions: function mozKeyboardSetSelectedOptions(indexes) {
@@ -143,15 +160,85 @@ MozKeyboard.prototype = {
     return this._focusHandler;
   },
 
+  deleteSurroundingText:
+      function mozKeyboardDeleteSurroundingText(beforeLength, afterLength) {
+    cpmm.sendAsyncMessage('Keyboard:DeleteSurroundingText', {
+      'beforeLength': beforeLength,
+      'afterLength': afterLength
+    });
+  },
+
+  commitText: function mozCommitText(text) {
+    cpmm.sendAsyncMessage('Keyboard:CommitText', {
+      'text': text
+    });
+  },
+
+  setComposingText: function mozKeyboardSetComposingText(text) {
+    cpmm.sendAsyncMessage('Keyboard:SetComposingText', {
+      'text': text
+    });
+  },
+
+  advanceFocus: function mozKeyboardAdvanceFocus() {
+    cpmm.sendAsyncMessage('Keyboard:MoveFocus', {
+      'direction': 'forward'
+    });
+  },
+
+  rewindFocus: function mozKeyboardRewindFocus() {
+    cpmm.sendAsyncMessage('Keyboard:MoveFocus', {
+      'direction': 'backward'
+    });
+  },
+
+   get canAdvanceFocus() {
+     return this._canAdvanceFocus;
+   },
+
+   get canRewindFocus() {
+     return this._canRewindFocus;
+   },
+
+  get inputType() {
+    return this._inputType;
+  },
+
+  get inputMode() {
+    return this._inputMode;
+  },
+
+  get returnKeyType() {
+    return this._returnKeyType;
+  },
+
+  get returnKeyLabel() {
+    return this._returnKeyLabel;
+  },
+
   receiveMessage: function mozKeyboardReceiveMessage(msg) {
     if (msg.name == "Keyboard:FocusChange") {
        let msgJson = msg.json;
        if (msgJson.type != "blur") {
          this._selectionStart = msgJson.selectionStart;
          this._selectionEnd = msgJson.selectionEnd;
+         this._text = msgJson.value;
+         this._canAdvanceFocus = msgJson.canAdvanceFocus;
+         this._canRewindFocus = msgJson.canRewindFocus;
+         this._inputType = msgJson.type;// XXX These two types are not identical.
+         this._inputMode = msgJson.inputmode;
+         this._returnKeyType = msgJson.returnkeytype;
+         this._returnKeyLabel = msgJson.returnkeylabel;
        } else {
          this._selectionStart = 0;
          this._selectionEnd = 0;
+         this._text = "";
+         this._canAdvanceFocus = false;
+         this._canRewindFocus = false;
+         this._inputType = "";
+         this._inputMode = "";
+         this._returnKeyType = "";
+         this._returnKeyLabel = "";
        }
 
       let handler = this._focusHandler;
@@ -178,6 +265,8 @@ MozKeyboard.prototype = {
       let evt = new this._window.CustomEvent("selectionchange",
           ObjectWrapper.wrap({}, this._window));
       handler.handleEvent(evt);
+    } else if (msg.name == "Keyboard:TextChange") {
+      this._text = msg.json.text;
     }
   },
 
