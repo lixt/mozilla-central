@@ -296,6 +296,7 @@ DIST_FILES += \
   removed-files \
   recommended-addons.json \
   distribution \
+  assets \
   $(NULL)
 
 ifdef MOZ_ENABLE_SZIP
