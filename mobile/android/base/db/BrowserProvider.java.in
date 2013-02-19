@@ -6,8 +6,12 @@
 #filter substitution
 package @ANDROID_PACKAGE_NAME@.db;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.Class;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -52,6 +56,7 @@ import android.content.ContentProviderOperation;
 import android.content.Context;
 import android.content.OperationApplicationException;
 import android.content.UriMatcher;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.MatrixCursor;
@@ -981,6 +986,60 @@ public class BrowserProvider extends ContentProvider {
             // Create distribution bookmarks before our own default bookmarks
             int pos = createDistributionBookmarks(db);
             createDefaultBookmarks(db, pos);
+
+            createDefaultPinnedBookmarks(db);
+        }
+
+
+        private void createDefaultPinnedBookmarks(SQLiteDatabase db) {
+            // Get the default pinned bookmark list from the asset file.
+            JSONArray pinnedList = null;
+            try {
+                AssetManager am = getContext().getAssets();
+                InputStream stream = am.open("default-pinned-sites.json");
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(stream));
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                    sb.append('\n');
+                }
+                stream.close();
+                pinnedList = new JSONArray(sb.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (pinnedList == null) {
+                return;
+            }
+
+            ContentValues bookmarksValues = new ContentValues();
+            bookmarksValues.put(Bookmarks.PARENT, guidToID(db, Bookmarks.PINNED_FOLDER_GUID));
+            long now = System.currentTimeMillis();
+            bookmarksValues.put(Bookmarks.DATE_CREATED, now);
+            bookmarksValues.put(Bookmarks.DATE_MODIFIED, now);
+
+            int pos = 0;
+            int length = pinnedList.length();
+            for (int i = 0; i < length; i++) {
+                try {
+                    JSONObject item = pinnedList.getJSONObject(i);
+                    String title = item.getString("title");
+                    String url = item.getString("url");
+
+                    bookmarksValues.put(Bookmarks.TITLE, title);
+                    bookmarksValues.put(Bookmarks.URL, url);
+                    bookmarksValues.put(Bookmarks.GUID, Utils.generateGuid());
+                    bookmarksValues.put(Bookmarks.POSITION, pos);
+                    db.insertOrThrow(TABLE_BOOKMARKS, Bookmarks.TITLE, bookmarksValues);
+                    pos++;
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         private String getLocalizedProperty(JSONObject bookmark, String property, Locale locale) throws JSONException {
