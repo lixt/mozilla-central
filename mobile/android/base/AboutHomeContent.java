@@ -23,6 +23,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -52,9 +53,11 @@ import android.widget.ScrollView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -100,6 +103,7 @@ public class AboutHomeContent extends ScrollView
 
     protected TopSitesCursorAdapter mTopSitesAdapter;
     protected TopSitesGridView mTopSitesGrid;
+    private DefaultPinnedBoomarks mDefaultPinnedBoomarks;
 
     private AboutHomePromoBox mPromoBox;
     protected AboutHomeSection mAddons;
@@ -135,7 +139,7 @@ public class AboutHomeContent extends ScrollView
 
     public void init() {
         int iconSize = mContext.getResources().getDimensionPixelSize(R.dimen.abouthome_addon_icon_size);
-        sIconBounds = new Rect(0, 0, iconSize, iconSize); 
+        sIconBounds = new Rect(0, 0, iconSize, iconSize);
         sSubTitleSpan = new TextAppearanceSpan(mContext, R.style.AboutHome_TextAppearance_SubTitle);
         mThumbnailBackground = mContext.getResources().getColor(R.color.abouthome_thumbnail_bg);
 
@@ -306,6 +310,10 @@ public class AboutHomeContent extends ScrollView
         final Cursor oldCursor = old;
         final Cursor newCursor = BrowserDB.getTopSites(resolver, mNumberOfTopSites);
 
+        if (mDefaultPinnedBoomarks == null) {
+            mDefaultPinnedBoomarks = new DefaultPinnedBoomarks();
+        }
+
         post(new Runnable() {
             @Override
             public void run() {
@@ -356,6 +364,13 @@ public class AboutHomeContent extends ScrollView
 
     private void displayThumbnail(View view, Bitmap thumbnail) {
         ImageView thumbnailView = (ImageView) view.findViewById(R.id.thumbnail);
+
+        TopSitesViewHolder holder = (TopSitesViewHolder) view.getTag();
+        String url = holder.getUrl();
+        Bitmap defaultThumbnail = mDefaultPinnedBoomarks.getDefaultThumbnail(url);
+        if (defaultThumbnail != null) {
+            thumbnail = defaultThumbnail;
+        }
 
         if (thumbnail == null) {
             thumbnailView.setImageResource(R.drawable.abouthome_thumbnail_bg);
@@ -737,11 +752,11 @@ public class AboutHomeContent extends ScrollView
             mRemoteTabs.hide();
             return;
         }
-        
+
         mRemoteTabs.clear();
-        
+
         String client = null;
-        
+
         for (TabsAccessor.RemoteTab tab : tabs) {
             if (client == null)
                 client = tab.name;
@@ -754,7 +769,7 @@ public class AboutHomeContent extends ScrollView
             mRemoteTabs.addItem(row);
             row.setOnClickListener(mRemoteTabClickListener);
         }
-        
+
         mRemoteTabs.setSubtitle(client);
         mRemoteTabs.show();
     }
@@ -1088,5 +1103,74 @@ public class AboutHomeContent extends ScrollView
         });
 
         mActivity.startActivityForResult(intent, requestCode);
+    }
+
+    private class DefaultPinnedBoomarks {
+        private static final String ASSET_PREFIX = "file:///android_asset/";
+
+        private final HashMap<String, String> mDefaultThumbnailMap;
+
+        public DefaultPinnedBoomarks() {
+            JSONArray defaultData = loadDefaultData();
+            mDefaultThumbnailMap = new HashMap<String, String>();
+            int defaultDataLen = defaultData.length();
+            for (int i = 0; i < defaultDataLen; i++) {
+                try {
+                    JSONObject item = defaultData.getJSONObject(i);
+                    String url = item.getString("url");
+                    String image = item.getString("image");
+                    mDefaultThumbnailMap.put(url, image);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        public Bitmap getDefaultThumbnail(String url) {
+            String imageUrl = mDefaultThumbnailMap.get(url);
+            if (imageUrl != null && imageUrl.startsWith(ASSET_PREFIX)) {
+                return getBitmapFromAsset(imageUrl.substring(ASSET_PREFIX.length()));
+            }
+            return null;
+        }
+
+        private JSONArray loadDefaultData() {
+            JSONArray result = null;
+            try {
+                AssetManager am = getContext().getAssets();
+                InputStream stream = am.open("default-pinned-sites.json");
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(stream));
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                    sb.append('\n');
+                }
+                stream.close();
+                result = new JSONArray(sb.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (result == null) {
+                result = new JSONArray();
+            }
+            return result;
+        }
+
+        private Bitmap getBitmapFromAsset(String fileName) {
+            Bitmap bmp = null;
+            try {
+                AssetManager am = getContext().getAssets();
+                InputStream stream = am.open(fileName);
+                bmp = BitmapFactory.decodeStream(stream);
+                stream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return bmp;
+        }
     }
 }
