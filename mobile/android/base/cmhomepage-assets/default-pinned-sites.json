@@ -26,4 +26,12 @@
   "title": "1号店",
   "url": "http://m.yihaodian.com?tracker_u=10977119545",
   "image": "file:///android_asset/images/yihaodian.png"
+}, {
+  "title": "亚马逊",
+  "url": "http://www.amazon.cn/gp/aw/?source=Mozilla",
+  "image": "file:///android_asset/images/amazon.png"
+}, {
+  "title": "1号店",
+  "url": "http://m.yihaodian.com?tracker_u=10977119545",
+  "image": "file:///android_asset/images/yihaodian.png"
 }]

@@ -141,10 +141,10 @@ public class TabsPanel extends LinearLayout
 
     public void addTab() {
         if (mCurrentPanel == Panel.NORMAL_TABS)
-           mActivity.addTab();
-        else
-           mActivity.addPrivateTab();
-
+            mActivity.addHomeTab();
+        else 
+            mActivity.addPrivateTab();
+        
         mActivity.autoHideTabs();
     }
 

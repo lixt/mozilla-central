@@ -17,6 +17,8 @@ import org.mozilla.gecko.sync.setup.activities.SetupSyncActivity;
 import org.mozilla.gecko.util.ActivityResultHandler;
 import org.mozilla.gecko.util.GeckoAsyncTask;
 
+import org.mozilla.apache.commons.codec.digest.DigestUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -86,6 +88,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class AboutHomeContent extends ScrollView
                               implements TabsAccessor.OnQueryTabsCompleteListener,
@@ -180,7 +186,45 @@ public class AboutHomeContent extends ScrollView
         mPrelimPromoBoxType = (new Random()).nextFloat() < 0.5 ? AboutHomePromoBox.Type.SYNC :
                 AboutHomePromoBox.Type.APPS;
     }
+    
+    public static void sendGridTrack (String fullurl) {
+    	try {
+    		URL Turl = new URL(fullurl);
+    		HttpURLConnection conn = (HttpURLConnection) Turl.openConnection();
+	    	conn.setConnectTimeout(3000);
+	    	conn.setReadTimeout(5000);
+	    	conn.setDoInput(true);
+	    	conn.setUseCaches(false);
+	    	conn.connect();
+    	} catch (IOException e) {
+    	}
+    }
 
+    public void trackGrid(int position, String spec) {
+    	String pos = Integer.toString(position + 1);
+    	String fullurl = "http://mobile.g-fox.cn/cfhome.gif?t=quickdial&a=click&d=" + pos + "&u=";
+        if (mDefaultPinnedBoomarks.checkDefaultBookmarks(spec)) {
+       		fullurl += DigestUtils.md5Hex(spec);
+        }
+        fullurl += "&cid=firefox.mobile&r=" + Math.random(); 
+    	Log.d("turl", fullurl);
+    	final String turl = fullurl;
+    	
+    	(new GeckoAsyncTask<Void, Void, Void>(GeckoApp.mAppContext, GeckoAppShell.getHandler()) {
+            @Override
+            public Void doInBackground(Void... params) {
+            	sendGridTrack(turl);
+                return null;
+            }
+            
+            @Override
+            public void onPostExecute(Void v) {
+            }
+
+        }).execute();
+        
+    }
+    
     private void inflate() {
         mInflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mInflater.inflate(R.layout.abouthome_content, this);
@@ -196,7 +240,9 @@ public class AboutHomeContent extends ScrollView
                     editSite(spec, position);
                     return;
                 }
-
+                
+                trackGrid(position, spec);
+                
                 if (mUriLoadCallback != null)
                     mUriLoadCallback.callback(spec);
             }
@@ -228,16 +274,16 @@ public class AboutHomeContent extends ScrollView
         });
 
         mPromoBox = (AboutHomePromoBox) findViewById(R.id.promo_box);
-        mAddons = (AboutHomeSection) findViewById(R.id.recommended_addons);
+        //mAddons = (AboutHomeSection) findViewById(R.id.recommended_addons);
         mLastTabs = (AboutHomeSection) findViewById(R.id.last_tabs);
         mRemoteTabs = (AboutHomeSection) findViewById(R.id.remote_tabs);
 
-        mAddons.setOnMoreTextClickListener(new View.OnClickListener() {
+     /*   mAddons.setOnMoreTextClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (mUriLoadCallback != null)
                     mUriLoadCallback.callback("https://addons.mozilla.org/android");
             }
-        });
+        });*/
 
         mRemoteTabs.setOnMoreTextClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -479,8 +525,8 @@ public class AboutHomeContent extends ScrollView
                 if (flags.contains(UpdateFlags.PREVIOUS_TABS))
                     readLastTabs();
 
-                if (flags.contains(UpdateFlags.RECOMMENDED_ADDONS))
-                    readRecommendedAddons();
+           //     if (flags.contains(UpdateFlags.RECOMMENDED_ADDONS))
+           //         readRecommendedAddons();
 
                 if (flags.contains(UpdateFlags.REMOTE_TABS))
                     loadRemoteTabs();
@@ -1111,6 +1157,14 @@ public class AboutHomeContent extends ScrollView
             }
         }
 
+        public Boolean checkDefaultBookmarks(String url) {
+        	String imageUrl = mDefaultThumbnailMap.get(url);
+        	if (imageUrl != null && imageUrl.startsWith(ASSET_PREFIX)) {
+        		return true;
+        	}
+        	return false;
+        }
+        
         public Bitmap getDefaultThumbnail(String url) {
             String imageUrl = mDefaultThumbnailMap.get(url);
             if (imageUrl != null && imageUrl.startsWith(ASSET_PREFIX)) {
