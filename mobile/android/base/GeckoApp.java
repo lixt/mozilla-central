@@ -757,6 +757,8 @@ abstract public class GeckoApp
     }
 
     public void addTab() { }
+    
+    public void addHomeTab() {}
 
     public void addPrivateTab() { }
 
