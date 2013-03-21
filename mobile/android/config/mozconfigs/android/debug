@@ -8,13 +8,12 @@ ac_add_options --enable-application=mobile/android
 
 # Android
 ac_add_options --target=arm-linux-androideabi
-ac_add_options --with-android-ndk="/tools/android-ndk-r8c"
-ac_add_options --with-android-sdk="/tools/android-sdk-r16/platforms/android-16"
+ac_add_options --with-android-ndk="$HOME/android-ndk-r8c"
+ac_add_options --with-android-sdk="$HOME/android-sdk/platforms/android-16"
 ac_add_options --with-android-gnu-compiler-version=4.6
 ac_add_options --with-android-version=5
 ac_add_options --with-system-zlib
 
-export JAVA_HOME=/tools/jdk6
 export MOZILLA_OFFICIAL=1
 export MOZ_TELEMETRY_REPORTING=1
 
@@ -25,3 +24,6 @@ ac_add_options --enable-warnings-as-errors
 
 # Use ccache
 ac_add_options --with-ccache=/usr/bin/ccache
+
+mk_add_options MOZ_OBJDIR=$HOME/fennec/objdir-droid
+mk_add_options MOZ_MAKE_FLAGS="-j9 -s"
