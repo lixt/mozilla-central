@@ -510,6 +510,10 @@ abstract public class BrowserApp extends GeckoApp
     public void addTab() {
         showAwesomebar(AwesomeBar.Target.NEW_TAB);
     }
+    
+    public void addHomeTab() {
+    	Tabs.getInstance().loadUrl("about:home", Tabs.LOADURL_NEW_TAB);
+    }
 
     public void addPrivateTab() {
         Tabs.getInstance().loadUrl("about:privatebrowsing", Tabs.LOADURL_NEW_TAB | Tabs.LOADURL_PRIVATE);
@@ -1133,7 +1137,7 @@ abstract public class BrowserApp extends GeckoApp
                 GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("DesktopMode:Change", args.toString()));
                 return true;
             case R.id.new_tab:
-                addTab();
+                addHomeTab();
                 return true;
             case R.id.new_private_tab:
                 addPrivateTab();
