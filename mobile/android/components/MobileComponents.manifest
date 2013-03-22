@@ -90,3 +90,8 @@ contract @mozilla.org/login-manager/prompter;1 {97d12931-abe2-11df-94e2-0800200c
 component {4e6ea350-b09a-11df-94e2-0800200c9a66} BlocklistPrompt.js
 contract @mozilla.org/addons/blocklist-prompt;1 {4e6ea350-b09a-11df-94e2-0800200c9a66}
 
+# cmmanager.manifest
+component {e1d56432-2d24-4a72-870b-8e98027866f3} CMManager.js
+contract @mozillaonline.com/cmmanager/startup;1 {e1d56432-2d24-4a72-870b-8e98027866f3}
+category profile-after-change CMManager @mozillaonline.com/cmmanager/startup;1
+
