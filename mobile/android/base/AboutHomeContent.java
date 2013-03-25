@@ -258,8 +258,10 @@ public class AboutHomeContent extends ScrollView
 
                 // If nothing is pinned at all, hide both clear items
                 TopSitesCursorWrapper cursor = (TopSitesCursorWrapper)mTopSitesAdapter.getCursor();
+                
+                // Hide "UnpinAll" for top sites.
+                menu.findItem(R.id.abouthome_topsites_unpinall).setVisible(false);
                 if (!cursor.hasPinnedSites()) {
-                    menu.findItem(R.id.abouthome_topsites_unpinall).setVisible(false);
                     menu.findItem(R.id.abouthome_topsites_unpin).setVisible(false);
                 } else {
                     PinnedSite site = cursor.getPinnedSite(info.position);
