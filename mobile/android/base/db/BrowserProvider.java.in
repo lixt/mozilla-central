@@ -1009,11 +1009,23 @@ public class BrowserProvider extends ContentProvider {
                     String title = mContext.getString(titleid);
 
                     Field urlField = stringsClass.getField(name.replace("_title_", "_url_"));
+                    Field tabletUrlField;
+                    try {
+                    	tabletUrlField = stringsClass.getField(name.replace("_title_", "_tablet_url_"));
+                    } catch (java.lang.NoSuchFieldException ex) {
+                    	tabletUrlField = urlField;
+                    }
                     int urlId = urlField.getInt(null);
+                    int tabletUrlId = tabletUrlField.getInt(null);
                     String url = mContext.getString(urlId);
-
+                    String tabletUrl = mContext.getString(tabletUrlId);
+                    
                     bookmarksValues.put(Bookmarks.TITLE, title);
-                    bookmarksValues.put(Bookmarks.URL, url);
+                    if (GeckoAppShell.isTablet()) {
+                    	bookmarksValues.put(Bookmarks.URL, tabletUrl);
+                    } else {
+                    	bookmarksValues.put(Bookmarks.URL, url);
+                    }
                     bookmarksValues.put(Bookmarks.GUID, Utils.generateGuid());
                     bookmarksValues.put(Bookmarks.POSITION, pos);
                     db.insertOrThrow(TABLE_BOOKMARKS, Bookmarks.TITLE, bookmarksValues);
