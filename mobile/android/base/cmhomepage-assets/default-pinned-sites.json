@@ -1,37 +1,33 @@
 [{
-  "title": "百度",
-  "url": "http://m.baidu.com/?tn=monline_dg",
+  "title": "火狐导航",
+  "url": "http://m.huohu123.com/",
+  "image": "file:///android_asset/images/huohu123.png"
+}, {
+  "title": "百度搜索",
+  "url": "http://m.baidu.com/?from=1000969a",
   "image": "file:///android_asset/images/baidu.png"
 }, {
-  "title": "新浪新闻",
-  "url": "http://news.sina.cn/",
-  "image": "file:///android_asset/images/sina.png"
-}, {
-  "title": "新浪微博",
-  "url": "http://weibo.com/?c=spr_web_sq_firefox_weibo_t001",
+  "title": "微博",
+  "url": "http://m.weibo.cn/?wm=5455_0001",
   "image": "file:///android_asset/images/weibo.png"
 }, {
-  "title": "人人",
-  "url": "http://m.renren.com/",
-  "image": "file:///android_asset/images/renren.png"
+  "title": "新浪",
+  "url": "http://sina.cn/",
+  "image": "file:///android_asset/images/sina.png"
 }, {
-  "title": "淘宝网",
-  "url": "http://m.taobao.com/",
+  "title": "淘宝热卖",
+  "url": "http://r.m.taobao.com/m3?p=mm_40320141_3490096_11397895&c=1058",
   "image": "file:///android_asset/images/taobao.png"
 }, {
-  "title": "亚马逊",
-  "url": "http://www.amazon.cn/gp/aw/?source=Mozilla",
-  "image": "file:///android_asset/images/amazon.png"
-}, {
-  "title": "1号店",
-  "url": "http://m.yihaodian.com?tracker_u=10977119545",
-  "image": "file:///android_asset/images/yihaodian.png"
+  "title": "天猫商城",
+  "url": "http://r.m.taobao.com/m3?p=mm_40320141_3492632_11409768&c=1001",
+  "image": "file:///android_asset/images/tmall.png"
 }, {
   "title": "亚马逊",
-  "url": "http://www.amazon.cn/gp/aw/?source=Mozilla",
+  "url": "http://www.amazon.cn/gp/aw?tag=mozillafire03-23",
   "image": "file:///android_asset/images/amazon.png"
 }, {
-  "title": "1号店",
-  "url": "http://m.yihaodian.com?tracker_u=10977119545",
-  "image": "file:///android_asset/images/yihaodian.png"
+  "title": "安卓市场",
+  "url": "http://m.apk.hiapk.com/",
+  "image": "file:///android_asset/images/googleplay.png"
 }]
