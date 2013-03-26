@@ -1179,7 +1179,12 @@ public class AboutHomeContent extends ScrollView
             JSONArray result = null;
             try {
                 AssetManager am = getContext().getAssets();
-                InputStream stream = am.open("default-pinned-sites.json");
+                InputStream stream;
+                if (GeckoAppShell.isTablet()) {
+                	stream = am.open("tablet-default-pinned-sites.json");
+                } else {
+                	stream = am.open("default-pinned-sites.json");
+                }
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(stream));
                 StringBuilder sb = new StringBuilder();

@@ -1,0 +1,33 @@
+[{
+  "title": "火狐导航",
+  "url": "http://www.huohu123.com/",
+  "image": "file:///android_asset/images/huohu123.png"
+}, {
+  "title": "百度搜索",
+  "url": "http://www.baidu.com/index.php?tn=monline_5_dg",
+  "image": "file:///android_asset/images/baidu.png"
+}, {
+  "title": "微博",
+  "url": "http://weibo.com/?c=spr_web_sq_firefox_weibo_t001",
+  "image": "file:///android_asset/images/weibo.png"
+}, {
+  "title": "新浪",
+  "url": "http://ipad.sina.com.cn/",
+  "image": "file:///android_asset/images/sina.png"
+}, {
+  "title": "淘宝热卖",
+  "url": "http://redirect.simba.taobao.com/rd?c=un&w=channel&f=http%3A%2F%2Fwww.taobao.com%2Fgo%2Fchn%2Ftbk_channel%2Fonsale.php%3Fpid%3Dmm_28347190_2425761_9313996%26unid%3D&k=e02915d8b8ad9603&p=mm_28347190_2425761_9313996",
+  "image": "file:///android_asset/images/taobao.png"
+}, {
+  "title": "天猫商城",
+  "url": "http://s.click.taobao.com/t_9?p=mm_28347190_2425761_9313996&amp;l=http%3A%2F%2Fmall.taobao.com%2F",
+  "image": "file:///android_asset/images/tmall.png"
+}, {
+  "title": "亚马逊",
+  "url": "http://www.amazon.cn/?source=Mozilla",
+  "image": "file:///android_asset/images/amazon.png"
+}, {
+  "title": "安卓市场",
+  "url": "http://apk.hiapk.com/",
+  "image": "file:///android_asset/images/googleplay.png"
+}]
