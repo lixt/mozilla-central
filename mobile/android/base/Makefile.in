@@ -1248,13 +1248,15 @@ ASSETS_DIRS = \
 
 ASSETS = \
   assets/default-pinned-sites.json     \
+  assets/tablet-default-pinned-sites.json   \
   assets/images/amazon.png             \
   assets/images/baidu.png              \
-  assets/images/renren.png             \
+  assets/images/huohu123.png           \
   assets/images/sina.png               \
   assets/images/taobao.png             \
   assets/images/weibo.png              \
-  assets/images/yihaodian.png          \
+  assets/images/tmall.png              \
+  assets/images/googleplay.png         \
   $(NULL)
 
 $(ASSETS_DIRS):
