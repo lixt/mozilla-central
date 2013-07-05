@@ -330,6 +330,10 @@ nsPlainTextSerializer::AppendElementStart(Element* aElement,
 
   nsresult rv;
   nsIAtom* id = GetIdForContent(mElement);
+  nsString tag;
+  id->ToString(tag);
+  printf("nsPlainTextSerializer::AppendElementStart %s\n", NS_ConvertUTF16toUTF8(tag).get());
+
 
   bool isContainer = !nsContentUtils::IsHTMLVoid(id);
 
@@ -362,13 +366,16 @@ nsPlainTextSerializer::AppendElementEnd(Element* aElement,
 
   nsresult rv;
   nsIAtom* id = GetIdForContent(mElement);
+  nsString tag;
+  id->ToString(tag);
+  printf("nsPlainTextSerializer::AppendElementEnd %s\n", NS_ConvertUTF16toUTF8(tag).get());
 
   bool isContainer = !nsContentUtils::IsHTMLVoid(id);
 
   mOutputString = &aStr;
-
   rv = NS_OK;
   if (isContainer) {
+
     rv = DoCloseContainer(id);
   }
 
@@ -1047,7 +1054,14 @@ nsPlainTextSerializer::DoAddLeaf(nsIAtom* aTag)
                          NS_LITERAL_STRING("] ");
     }
    
-    Write(imageDescription);
+    //Write(imageDescription);
+    Write(NS_LITERAL_STRING("\\x1A"));
+    printf("DoAddLeaf img\n");
+  } else {
+    Write(NS_LITERAL_STRING("\\x1A"));
+    nsString tag;
+    aTag->ToString(tag);
+    printf("DoAddLeaf %s\n", NS_ConvertUTF16toUTF8(tag).get());
   }
 
   return NS_OK;

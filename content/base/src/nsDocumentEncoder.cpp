@@ -351,6 +351,11 @@ nsDocumentEncoder::SerializeNodeStart(nsINode* aNode,
                                       nsAString& aStr,
                                       nsINode* aOriginalNode)
 {
+  nsString tag;
+  aNode->Tag()->ToString(tag);
+  printf("nsDocumentEncoder::SerializeNodeStart aNode=%s aStartOffset=%d aEndOffset=%d\n",
+      NS_ConvertUTF16toUTF8(tag).get(),
+      aStartOffset, aEndOffset);
   if (!IsVisibleNode(aNode))
     return NS_OK;
   
@@ -442,8 +447,15 @@ nsDocumentEncoder::SerializeToStringRecursive(nsINode* aNode,
                                               nsAString& aStr,
                                               bool aDontSerializeRoot)
 {
-  if (!IsVisibleNode(aNode))
+  nsString tag;
+  aNode->Tag()->ToString(tag);
+  printf("nsDocumentEncoder::SerializeToStringRecursive aNode=%s\n",
+      NS_ConvertUTF16toUTF8(tag).get());
+  if (!IsVisibleNode(aNode)) {
+    printf("Invisible\n");
     return NS_OK;
+  }
+  printf("Visible\n");
 
   nsresult rv = NS_OK;
   bool serializeClonedChildren = false;
@@ -469,14 +481,16 @@ nsDocumentEncoder::SerializeToStringRecursive(nsINode* aNode,
         bool isSelectable;
         frame->IsSelectable(&isSelectable, nullptr);
         if (!isSelectable){
-          aDontSerializeRoot = true;
+          //aDontSerializeRoot = true;
         }
       }
     }
   }
 
   if (!aDontSerializeRoot) {
+    printf("nsDocumentEncoder::SerializeToStringRecursive Enter SerializeNodeStart aString=%s\n", NS_ConvertUTF16toUTF8(aStr).get());
     rv = SerializeNodeStart(maybeFixedNode, 0, -1, aStr, aNode);
+    printf("nsDocumentEncoder::SerializeToStringRecursive Leave SerializeNodeStart aString=%s\n", NS_ConvertUTF16toUTF8(aStr).get());
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -485,12 +499,16 @@ nsDocumentEncoder::SerializeToStringRecursive(nsINode* aNode,
   for (nsINode* child = nsNodeUtils::GetFirstChildOfTemplateOrNode(node);
        child;
        child = child->GetNextSibling()) {
+    printf("nsDocumentEncoder::SerializeToStringRecursive Enter SerializeToStringRecursive aString=%s\n", NS_ConvertUTF16toUTF8(aStr).get());
     rv = SerializeToStringRecursive(child, aStr, false);
+    printf("nsDocumentEncoder::SerializeToStringRecursive Leave SerializeToStringRecursive aString=%s\n", NS_ConvertUTF16toUTF8(aStr).get());
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
   if (!aDontSerializeRoot) {
+    printf("nsDocumentEncoder::SerializeToStringRecursive Enter SerializeNodeEnd aString=%s\n", NS_ConvertUTF16toUTF8(aStr).get());
     rv = SerializeNodeEnd(node, aStr);
+    printf("nsDocumentEncoder::SerializeToStringRecursive Leave SerializeNodeEnd aString=%s\n", NS_ConvertUTF16toUTF8(aStr).get());
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -769,11 +787,25 @@ nsDocumentEncoder::SerializeRangeNodes(nsRange* aRange,
       endNode = mEndNodes[end];
   }
 
+  nsString startNodeTag;
+  if (startNode) {
+    startNode->Tag()->ToString(startNodeTag);
+  }
+  nsString endeNodeTag;
+  if (endNode) {
+    endNode->Tag()->ToString(endeNodeTag);
+  }
+  printf("nsDocumentEncoder::SerializeRangeNodes startNode=%s endNode=%s aDepth=%d\n",
+      NS_ConvertUTF16toUTF8(startNodeTag).get(),
+      NS_ConvertUTF16toUTF8(endeNodeTag).get(),
+      aDepth);
   if (startNode != content && endNode != content)
   {
     // node is completely contained in range.  Serialize the whole subtree
     // rooted by this node.
+    printf("nsDocumentEncoder::SerializeRangeNodes Enter SerializeToStringRecursive aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
     rv = SerializeToStringRecursive(aNode, aString, false);
+    printf("nsDocumentEncoder::SerializeRangeNodes Leave SerializeToStringRecursive aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
     NS_ENSURE_SUCCESS(rv, rv);
   }
   else
@@ -783,6 +815,7 @@ nsDocumentEncoder::SerializeRangeNodes(nsRange* aRange,
     //XXXsmaug What does this all mean?
     if (IsTextNode(aNode))
     {
+      printf("nsDocumentEncoder::SerializeRangeNodes Enter SerializeNodeStart aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
       if (startNode == content)
       {
         int32_t startOffset = aRange->StartOffset();
@@ -795,6 +828,7 @@ nsDocumentEncoder::SerializeRangeNodes(nsRange* aRange,
         rv = SerializeNodeStart(aNode, 0, endOffset, aString);
         NS_ENSURE_SUCCESS(rv, rv);
       }
+      printf("nsDocumentEncoder::SerializeRangeNodes Leave SerializeNodeStart aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
     }
     else
     {
@@ -810,7 +844,9 @@ nsDocumentEncoder::SerializeRangeNodes(nsRange* aRange,
         if ((endNode == content) && !mHaltRangeHint) mEndDepth++;
       
         // serialize the start of this node
+        printf("nsDocumentEncoder::SerializeRangeNodes Enter SerializeNodeStart aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
         rv = SerializeNodeStart(aNode, 0, -1, aString);
+        printf("nsDocumentEncoder::SerializeRangeNodes Leave SerializeNodeStart aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
         NS_ENSURE_SUCCESS(rv, rv);
       }
       
@@ -846,10 +882,16 @@ nsDocumentEncoder::SerializeRangeNodes(nsRange* aRange,
       {
         childAsNode = content->GetChildAt(j);
 
-        if ((j==startOffset) || (j==endOffset-1))
+        if ((j==startOffset) || (j==endOffset-1)) {
+          printf("nsDocumentEncoder::SerializeRangeNodes Enter SerializeRangeNodes aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
           rv = SerializeRangeNodes(aRange, childAsNode, aString, aDepth+1);
-        else
+          printf("nsDocumentEncoder::SerializeRangeNodes Leave SerializeRangeNodes aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
+        }
+        else {
+          printf("nsDocumentEncoder::SerializeRangeNodes Enter SerializeToStringRecursive aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
           rv = SerializeToStringRecursive(childAsNode, aString, false);
+          printf("nsDocumentEncoder::SerializeRangeNodes Leave SerializeToStringRecursive aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
+        }
 
         NS_ENSURE_SUCCESS(rv, rv);
       }
@@ -857,7 +899,9 @@ nsDocumentEncoder::SerializeRangeNodes(nsRange* aRange,
       // serialize the end of this node
       if (aNode != mCommonParent)
       {
+        printf("nsDocumentEncoder::SerializeRangeNodes Enter SerializeNodeEnd aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
         rv = SerializeNodeEnd(aNode, aString);
+        printf("nsDocumentEncoder::SerializeRangeNodes Leave SerializeNodeEnd aString=%s\n", NS_ConvertUTF16toUTF8(aString).get());
         NS_ENSURE_SUCCESS(rv, rv); 
       }
     }
@@ -988,11 +1032,15 @@ nsDocumentEncoder::SerializeRangeToString(nsRange *aRange,
   }
   else
   {
+    printf("nsDocumentEncoder::SerializeRangeToString enter SerializeRangeNodes mCommonParent=%s\n", NS_ConvertUTF16toUTF8(mCommonParent->NodeName()).get());
     rv = SerializeRangeNodes(aRange, mCommonParent, aOutputString, 0);
+    printf("nsDocumentEncoder::SerializeRangeToString leave SerializeRangeNodes %s\n", NS_ConvertUTF16toUTF8(aOutputString).get());
     NS_ENSURE_SUCCESS(rv, rv);
   }
   rv = SerializeRangeContextEnd(mCommonAncestors, aOutputString);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  printf("nsDocumentEncoder::SerializeRangeToString leave %s\n", NS_ConvertUTF16toUTF8(aOutputString).get());
 
   return rv;
 }
