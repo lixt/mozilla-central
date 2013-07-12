@@ -56,7 +56,8 @@ abstract public class BrowserApp extends GeckoApp
     private AboutHomeContent mAboutHomeContent;
     private Boolean mAboutHomeShowing = null;
     protected Telemetry.Timer mAboutHomeStartupTimer = null;
-
+    private Boolean mNoImageMode = false;
+    
     private static final int ADDON_MENU_OFFSET = 1000;
     private class MenuItemInfo {
         public int id;
@@ -969,6 +970,25 @@ abstract public class BrowserApp extends GeckoApp
       });
     }
 
+    public void initNoImageMode(MenuItem item) {
+    	final MenuItem noImageMode = item;
+    	PrefsHelper.getPref("permissions.default.image", new PrefsHelper.PrefHandlerBase() {
+    		@Override
+    		public void prefValue(String pref, int value) {
+    			if (value == 1 || value == 3) {
+    				mNoImageMode = false;
+    			}
+    			if (value == 2) {
+    				mNoImageMode = true;
+    			}
+    		}
+    		@Override
+    		public void finish() {  
+    			noImageMode.setChecked(mNoImageMode);
+    		}
+		});
+    }
+    
     @Override
     public boolean onPrepareOptionsMenu(Menu aMenu) {
         if (aMenu == null)
@@ -985,6 +1005,7 @@ abstract public class BrowserApp extends GeckoApp
         MenuItem charEncoding = aMenu.findItem(R.id.char_encoding);
         MenuItem findInPage = aMenu.findItem(R.id.find_in_page);
         MenuItem desktopMode = aMenu.findItem(R.id.desktop_mode);
+        MenuItem noImageMode = aMenu.findItem(R.id.no_image_mode);
 
         // Only show the "Quit" menu item on pre-ICS. In ICS+, it's easy to
         // kill an app through the task switcher.
@@ -1008,6 +1029,9 @@ abstract public class BrowserApp extends GeckoApp
         desktopMode.setChecked(tab.getDesktopMode());
         desktopMode.setIcon(tab.getDesktopMode() ? R.drawable.ic_menu_desktop_mode_on : R.drawable.ic_menu_desktop_mode_off);
 
+        noImageMode.setChecked(false);
+        initNoImageMode(noImageMode);
+        
         String url = tab.getURL();
         if (ReaderModeUtils.isAboutReader(url)) {
             String urlFromReader = ReaderModeUtils.getUrlFromAboutReader(url);
@@ -1053,6 +1077,28 @@ abstract public class BrowserApp extends GeckoApp
 
         }
         return super.onContextItemSelected(item);
+    }
+    
+    private void toggleNoImageMode() {
+    	PrefsHelper.getPref("permissions.default.image", new PrefsHelper.PrefHandlerBase() {
+    		@Override
+    		public void prefValue(String pref, int value) {
+    			if (value == 1 || value == 3) {
+    				mNoImageMode = true;
+    			}
+    			if (value == 2) {
+    				mNoImageMode = false;
+    			}
+    		}
+    		@Override
+    		public void finish() {   
+    			if (mNoImageMode) {
+    				PrefsHelper.setPref("permissions.default.image", 2);
+    			} else {
+    				PrefsHelper.setPref("permissions.default.image", 1);
+    			}
+    		}
+		});
     }
 
     @Override
@@ -1119,6 +1165,9 @@ abstract public class BrowserApp extends GeckoApp
                 }
                 GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("DesktopMode:Change", args.toString()));
                 return true;
+            case R.id.no_image_mode:
+            	toggleNoImageMode();
+            	return true;
             case R.id.new_tab:
                 addTab();
                 return true;

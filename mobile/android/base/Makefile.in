@@ -809,6 +809,7 @@ RES_DRAWABLE_MDPI_V11 = \
   res/drawable-mdpi-v11/ic_menu_bookmark_remove.png \
   res/drawable-mdpi-v11/ic_menu_desktop_mode_off.png \
   res/drawable-mdpi-v11/ic_menu_desktop_mode_on.png \
+  res/drawable-mdpi-v11/ic_menu_no_image_mode.png \
   res/drawable-mdpi-v11/ic_menu_downloads.png \
   res/drawable-mdpi-v11/ic_menu_find_in_page.png \
   res/drawable-mdpi-v11/ic_menu_forward.png \
@@ -834,6 +835,7 @@ RES_DRAWABLE_HDPI_V11 = \
   res/drawable-hdpi-v11/ic_menu_bookmark_remove.png \
   res/drawable-hdpi-v11/ic_menu_desktop_mode_off.png \
   res/drawable-hdpi-v11/ic_menu_desktop_mode_on.png \
+  res/drawable-hdpi-v11/ic_menu_no_image_mode.png \
   res/drawable-hdpi-v11/ic_menu_downloads.png \
   res/drawable-hdpi-v11/ic_menu_find_in_page.png \
   res/drawable-hdpi-v11/ic_menu_forward.png \
@@ -859,6 +861,7 @@ RES_DRAWABLE_XHDPI_V11 = \
   res/drawable-xhdpi-v11/ic_menu_bookmark_remove.png \
   res/drawable-xhdpi-v11/ic_menu_desktop_mode_off.png \
   res/drawable-xhdpi-v11/ic_menu_desktop_mode_on.png \
+  res/drawable-xhdpi-v11/ic_menu_no_image_mode.png \
   res/drawable-xhdpi-v11/ic_menu_downloads.png \
   res/drawable-xhdpi-v11/ic_menu_find_in_page.png \
   res/drawable-xhdpi-v11/ic_menu_forward.png \
@@ -973,6 +976,7 @@ MOZ_ANDROID_DRAWABLES += \
   mobile/android/base/resources/drawable/ic_menu_back.xml                       \
   mobile/android/base/resources/drawable/ic_menu_desktop_mode_off.xml           \
   mobile/android/base/resources/drawable/ic_menu_desktop_mode_on.xml            \
+  mobile/android/base/resources/drawable/ic_menu_no_image_mode.xml           \
   mobile/android/base/resources/drawable/ic_menu_quit.xml                       \
   mobile/android/base/resources/drawable/menu_button.xml                        \
   mobile/android/base/resources/drawable/menu_item_checkmark.xml                \
