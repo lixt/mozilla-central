@@ -15,6 +15,7 @@
 #include ../services/manifests/AnnouncementsAndroidManifest_permissions.xml.in
 #include ../services/manifests/SyncAndroidManifest_permissions.xml.in
 #include zxing/manifests/ZxingAndroidManifest_permissions.xml.in
+#include baidu-geolocation-libs/manifests/BaiduGeolocation_permissions.xml.in
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -207,6 +208,7 @@
 #include ../services/manifests/SyncAndroidManifest_activities.xml.in
 #include ../services/manifests/HealthReportAndroidManifest_activities.xml.in
 #include zxing/manifests/ZxingAndroidManifest_activities.xml.in
+#include baidu-geolocation-libs/manifests/BaiduGeolocation_services.xml.in
 
 #if MOZ_CRASHREPORTER
   <activity android:name="org.mozilla.gecko.CrashReporter"
