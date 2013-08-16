@@ -19,7 +19,6 @@ EXTRA_SOS = baidu-geolocation-libs/liblocSDK3.so
 EXTRA_SOS_TARGET = lib/armeabi-v7a/liblocSDK3.so
 EXTRA_SOS_TARGET_PATH = lib/armeabi-v7a
 
-
 MOZGLUE_JAVA_FILES := \
   mozglue/ByteBufferInputStream.java \
   mozglue/DirectBufferAllocator.java \
@@ -1197,7 +1196,7 @@ classes.dex: $(ALL_JARS)
 	@echo "DX classes.dex"
 	$(DX) --dex --output=classes.dex jars $(ANDROID_COMPAT_LIB) $(addprefix $(srcdir)/,$(EXTRA_JARS))
 
-jars/gecko-browser.jar: jars/gecko-mozglue.jar jars/gecko-util.jar jars/sync-thirdparty.jar $(addprefix $(srcidr)/,$(EXTRA_JARS)) $(addprefix $(srcdir)/,$(FENNEC_JAVA_FILES)) $(FENNEC_PP_JAVA_FILES) $(FENNEC_PP_JAVA_VIEW_FILES) $(addprefix $(srcdir)/,$(SYNC_JAVA_FILES)) $(SYNC_PP_JAVA_FILES) $(addprefix $(srcdir)/,$(ZXING_JAVA_FILES)) R.java
+jars/gecko-browser.jar: jars/gecko-mozglue.jar jars/gecko-util.jar jars/sync-thirdparty.jar $(addprefix $(srcdir)/,$(EXTRA_JARS)) $(addprefix $(srcdir)/,$(FENNEC_JAVA_FILES)) $(FENNEC_PP_JAVA_FILES) $(FENNEC_PP_JAVA_VIEW_FILES) $(addprefix $(srcdir)/,$(SYNC_JAVA_FILES)) $(SYNC_PP_JAVA_FILES) $(addprefix $(srcdir)/,$(ZXING_JAVA_FILES)) R.java
 	@echo "JAR gecko-browser.jar"
 	$(NSINSTALL) -D classes/gecko-browser
 	$(JAVAC) $(JAVAC_FLAGS) -Xlint:all,-deprecation,-fallthrough -d classes/gecko-browser -classpath "jars/gecko-mozglue.jar:jars/gecko-util.jar:jars/sync-thirdparty.jar:$(addprefix $(srcdir)/,$(EXTRA_JARS))" $(addprefix $(srcdir)/,$(FENNEC_JAVA_FILES)) $(FENNEC_PP_JAVA_FILES) $(FENNEC_PP_JAVA_VIEW_FILES) $(addprefix $(srcdir)/,$(SYNC_JAVA_FILES)) $(SYNC_PP_JAVA_FILES) $(addprefix $(srcdir)/,$(ZXING_JAVA_FILES)) R.java
@@ -1375,7 +1374,7 @@ R.java: $(MOZ_APP_ICON) $(RESOURCES) $(RES_DRAWABLE) $(RES_BRANDING_DRAWABLE_MDP
 gecko.ap_: AndroidManifest.xml res/drawable-mdpi/icon.png res/drawable-hdpi/icon.png res/drawable-xhdpi/icon.png res/drawable-xxhdpi/icon.png $(RESOURCES) $(RES_DRAWABLE) $(RES_BRANDING_DRAWABLE_MDPI) $(PP_RES_XML) res/values/strings.xml $(ASSETS) FORCE
 	$(AAPT) package -f -M AndroidManifest.xml -I $(ANDROID_SDK)/android.jar  -S res -A assets -F $@
 	mkdir -p $(EXTRA_SOS_TARGET_PATH)
-	cp $(srcdir)/$(EXTRA_SOS) $(EXTAR_SOS_TARGET_PATH)
+	cp $(srcdir)/$(EXTRA_SOS) $(EXTRA_SOS_TARGET_PATH)
 	zip $@ $(EXTRA_SOS_TARGET)
 
 libs:: classes.dex package-name.txt jni-stubs.inc
